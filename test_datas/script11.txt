@@ -1,0 +1,27 @@
+A = zeros(2, 3)
+B = [2, 3; 5, 2]
+C = [2, 4]
+D = (B == B.')
+
+subset X{
+	A = 1
+	V = A
+}
+
+E = X.V
+
+variable S = 1
+variable hello = "internal"
+failed = success
+
+Hemis = quit
+test = (3 == 5)
+
+function roomba(X) = X * (X + 1)
+
+Ohayou = roomba(3)
+Oyasumi = roomba(4)
+Tennis = roomba(S);	# セミコロンで次の行と区別する(roomba(S)[..]の意味にならないように)
+
+[fONE, fTWO; fThree] = [1, 2; 3, 4]
+reference [R, Q; P] = [1, 2; 3, 4]

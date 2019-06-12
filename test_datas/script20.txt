@@ -1,0 +1,5 @@
+variable text = "1 + a * b"
+result = eval(text)
+
+a = 2
+b = 3

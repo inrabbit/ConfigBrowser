@@ -1,0 +1,23 @@
+function t(x) = [x, x+1]
+variable a = 2
+b = t(a)
+c = t(a * 2)
+d = 2*3*4
+power = 2^3
+pow_test = [1, 2, 3] .^ [3, 2, 1]
+log_test = log2(8)
+power_dbl = 10.2^0.5
+hello = power_dbl * power_dbl
+
+enter = [1, 2; 3, 4]
+good = enter[1, 1]
+prise = [(1, 2);(3, 4)]
+ant = [1, 2];
+wrt = [3, 4];
+prise2 = [(ant);(wrt)]
+fat = prise[1]
+fat2 = prise2[1]
+m = prise2[1][1]
+
+table = [2:10]
+test = table[[2, 1]]

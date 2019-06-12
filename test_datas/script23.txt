@@ -1,0 +1,3 @@
+text = sprintf("x = %03d, y=%3.2f >>", x, y)
+variable x = 0
+variable y = 2.3

@@ -1,0 +1,13 @@
+A = 1
+subset X
+
+E = X.F
+subset X {
+	B = 6
+	D = B
+	F = 3
+}
+C = X.D
+
+G = Y.F
+Y = X

@@ -1,0 +1,9 @@
+a = [1, 2, 2; 5, 2, 1; 3, 6, 8]
+variable b = 2
+c = a^b
+
+PI = 3.14159265
+variable x = 0.5
+Sin = sin(PI * x)
+Cos = cos(PI * x)
+Tan = tan(PI * x)

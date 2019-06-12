@@ -1,0 +1,7 @@
+A = Z.B
+subset X{
+	subset Y{
+		B = 5
+	}
+}
+Z = X.Y

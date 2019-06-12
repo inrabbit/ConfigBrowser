@@ -1,0 +1,17 @@
+function A(X) = X + 1
+P = A(2)
+Q = A(5)
+
+function B(X) = X.R + X.S
+
+subset X{
+	R = 1
+	S = 3
+}
+subset Y{
+	R = 6
+	S = 7
+}
+
+T = B(X)
+U = B(Y)

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="ConfigBrowser">
+</Property><Property Name="ソリューション ファイル" Value="C:\work3\ConfigBrowser\ConfigBrowser.sln">
+</Property><Property Name="Date" Value="2011年2月3日">
+</Property><Property Name="Time" Value="18:14">
+</Property></Properties><Event ErrorLevel="0" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Converting project file 'C:\work3\ConfigBrowser\ConfigBrowser.vcproj'.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="0" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Done converting to new project file 'C:\work3\ConfigBrowser\ConfigBrowser.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="ConfigBrowser" Source="ConfigBrowser.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="ConfigBrowser.sln" Description="ソリューションは正常に変換されました">
+</Event><Event ErrorLevel="3" Project="" Source="ConfigBrowser.sln" Description="Converted">
+</Event></UpgradeLog>

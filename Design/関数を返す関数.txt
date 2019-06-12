@@ -1,0 +1,81 @@
+関数を返す関数
+
+以下２つは同値
+function A(B) = [Bの式]
+A = function(B) [Bの式]
+
+2番目の書式は、関数を返す関数を定義するのに使われる
+FN = function(A) function(B) [A, Bの式]
+(呼び出し方法)
+X = FN(a)(b)
+
+関数を引数にとる場合
+ネストする
+NEST = function(A, B) function(X) A(B(X))
+(意味)
+NEST(a, b)(c) = a(b(c))
+
+実装方法
+Ｅｑｕａｔｉｏｎオブジェクトの引数保持(Arguments)に、レベルを
+導入する。
+レベル０が、全ての仮引数が、実引数で満たされたという意味
+であり、数値の評価が可能となる。
+（レベルを導入するコストが高ければ、Functionという
+新規Ｃ＋＋オブジェクトを作成する）
+
+FN(a) = EQN:FUNC_CALL{
+ARG0 = FN = EQN:FUNC{
+ARG0 = ※１(A, Bの式)
+ARG1 = レベル１の仮引数リスト[Aの仮引数]
+ARG2 = レベル２の仮引数リスト[Bの仮引数]
+}
+ARG1 = [a(Aの実引数)]
+CACHE = EQN:FUNC{
+ARG0 = [※１にaを代入したもの]
+ARG1 = [Bの仮引数]
+}
+}
+
+関数再帰
+RFN = function(A, N) if N == 0 then function(X) X else function(X) A(RFN(A, N-1)(X))
+(意味)
+RFN(a, 4)(c) = a(a(a(a(c))))
+
+これの実装は、レベルｎの関数を使って、レベルｎ＋１の関数を作れる
+ようにすることによって実現される。
+
+RFN_ARG = function(A, Y) if length(Y) == 1 then function(X) A(X, Y) else function(X) A(RFN_ARG(A, Y[begin:(end-1)])(X), Y[end])
+(意味)
+RFN_ARG(a, x)(c) = a(a(a(a(c, x[0]), x[1]), x[2]), x[3])
+
+引数によってレベルが変わる関数
+CFN = function(X) switch X
+	case 0 then 0
+	case 1 then function(A) A
+	case 2 then function(A) function(B) A + B
+	case 3 then function(A) function(B) function(C) A + B + C
+(意味)
+CFN(0) = 0
+CFN(1)(a) = a
+CFN(3)(a)(b)(c) = a + b + c
+
+関数レベルの再帰定義
+LFN = function(N) LFN_HELP(N, [])
+LFN_HELP = function(N, T) if N == 0 then sum(T) else function(X) LFN_HELP(N-1, [T; X])
+(意味)
+LFN(0) = 0
+LFN(1)(a) = a
+LFN(3)(a)(b)(c) = a + b + c
+
+結論
+☆関数を作る関数呼び出しが必要
+定義
+FN = EQN:FUNC_MAKE{
+ARG0 = (式)
+ARG1 = (現在のレベルの仮引数リスト)
+}
+☆関数オブジェクトの実装方法
+(1)関数オブジェクト自身にはレベルを導入する
+　EQN:FUNCを式として、EQN:FUNC_MAKEが呼び出された場合には、関数のレベルを１つ追加する(関数を返す関数)
+(2)レベルを導入しないで、実行時にEQN:FUNC_MAKEを直接評価させる（←採用）
+　EQN:FUNC_MAKEは、単なる実引数のコンテナとなる

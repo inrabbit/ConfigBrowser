@@ -1,0 +1,15 @@
+subset X, Y.W
+A = X.A + Z.W.B
+
+subset X{
+	A = 3
+}
+
+subset Y{
+	B = 2
+	subset W{
+		B = 4
+	}
+}
+
+Z = Y

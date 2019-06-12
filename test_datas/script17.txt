@@ -1,0 +1,20 @@
+ans = a[b]
+variable b = 1
+a = "hello", "c", "world"
+
+
+
+subset x{
+	val = "x is selected"
+}
+
+subset y{
+	val = "y is selected"
+}
+
+subset z{
+	val = "z is selected"
+}
+
+ans2 = sarray[b].val
+sarray = x, y, z

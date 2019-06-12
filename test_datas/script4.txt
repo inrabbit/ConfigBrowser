@@ -1,0 +1,11 @@
+
+A = X.B
+E = X.Z.C
+subset Y{
+	subset Z{
+		C = 2
+	}
+	B = Z.C
+}
+X = Y
+D = Y.Z.C

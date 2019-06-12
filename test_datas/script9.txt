@@ -1,0 +1,17 @@
+function F(X, Y) = [X.A, X.B; X.C, X.D] + Y
+
+subset M1{
+	A = 1
+	B = 2
+	C = 3
+	D = 4
+}
+subset M2{
+	A = -3
+	B = 3
+	C = B
+	D = A
+}
+
+ANS1 = F(M1, 3)
+ANS2 = F(M2, [1, 6; 6, 1])

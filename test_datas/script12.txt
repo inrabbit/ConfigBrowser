@@ -1,0 +1,21 @@
+reference A = 1
+B = 2
+C = [A, B]
+D = [C; C]
+PLUS = A + B
+MINUS = A
+function X(E) = E + [1, 2; 3, 4]
+Y = X(D)
+Extract = Y[:, 1]
+Z = D + [3, 4; 5, 6]
+
+subset XIN
+{
+	OCCUPATION = "Neet"
+	AGE = 25
+	subset PET
+	{
+		NAME = "Roomba"
+		KIND = "Robot"
+	}
+}

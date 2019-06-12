@@ -1,0 +1,2 @@
+variable x = 234
+text = "x is " + x + ". hello."

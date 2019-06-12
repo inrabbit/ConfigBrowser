@@ -1,0 +1,99 @@
+2010/06/10 手続き型拡張
+
+procedureキーワード
+
+■戻り値なし
+A = procedure{
+	B = 1
+	B = B + 1
+	[.D, .E] = [B, 2]
+}
+
+function FN(x) = procedure{
+	N = x * 2
+}
+
+■戻り値あり
+A = procedure{
+	B = 1
+	B = B + 1
+	return B
+}
+
+function FN(x) = procedure{
+	N = x * 2
+	A = [1:N]
+	return A + 1
+}
+
+■戻り値なしの実行方法
+pDB->getUnivType("A")->Exec();
+
+・戻り値ありのものは、そのまま評価すれば取得される
+　戻り値なしのものを戻り値ありとして評価した場合には、EMPTYが返る
+
+■グローバル変数と一時変数の規則
+variable VAR = 1
+CON = 2
+procedure{
+	N = .CON	# OK
+	N = .VAR	# OK
+	N = CON	# NG CONは未定義
+	.VAR = 2	# OK グローバル変数のVARが更新される
+	CON = 3	# OK procedure内部のローカル変数としてCONが生成される
+	.CON = 1	# NG グローバルのCONは定数
+	NEW = 4	# OK procedure内部のローカル変数としてNEWが生成される
+	M = CON	# OK M = 3となる
+}
+
+.AによってグローバルのAを示すというのは、subsetでも使えるようにする
+
+
+2010/06/20 オブジェクト指向拡張
+
+・型とインスタンスという枠組みでなく、集合操作のみ
+・集合の「複製、和、上書き和（オーバーライド）
+
+subset A, B, C
+subset X = A + B	集合和
+subset Y = duplicate(A) + B
+subset Z = A >+ B	オーバーライド
+
+duplicate(A)		Aの複製
+duplicate(A, [2; 3])	Aの複製の配列
+
+emptyset		空集合
+
+
+2010/06/20 関数定義方法を増やす
+以下２文は同値とする
+function add(X, Y) = X + Y
+add = function(X, Y) X + Y
+
+関数を返す関数
+・Ｘを足して返す関数
+FUNC = function(X) function(Y) X + Y
+Z = FUNC(3)
+A = Z(6)	# A = 9
+
+2011/05/09 手続き型の記法の改良
+
+・{}ブロックで囲うと手続き型になる
+
+function main(args) {
+
+	return 0
+}
+
+・function main(args) = {} でも同じ意味
+
+function main(args) = if args[0] == "exit" then 0 else {
+	a()
+	b()
+	return 1
+}
+
+・function構文の「=」はあってもなくてもよい
+
+function add(a, b) = a + b
+function add(a, b) a + b

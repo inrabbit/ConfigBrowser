@@ -1,0 +1,567 @@
+Octaveベースのパラメータ記述言語
+
+・Excelの表計算の便利さを開発ターゲットに直接取り込みたい
+・大量のパラメータや情報を必要とする組み込み機器
+・補正処理などが重要性を増している。アルゴリズム変更に用意に対応したい。
+・表計算は行列演算である→言語としてはOctaveと互換性を持つ仕様とする
+・Octave・・・行列演算、線形代数などの数値解析言語
+・関数型言語となる
+
+V : Vector or Matrix
+E : Scalar Equation
+S : Scalar
+N : Number
+I = {S, :, }
+
+Language Definition
+S = N
+S = [S]
+S = (S)
+S = S + S
+S = S - S
+S = S * S
+S = S / S
+
+Primitiveはどこに入る？
+
+V = S
+V = [V]
+V = (V)
+V = V, V, V, ..., V
+V = V; V; V; ...; V
+V = V + V
+V = V - V
+V = S * V = V * S
+V = V / S = S / V
+V = V .* V
+V = V ./ V
+V = V * V   行列積（サイズに制限あり）
+
+■これまでの文法仕様
+
+expression := (+ or - or ' ') term (+ or -) term (+ or -) term ... term
+ 
+primitive := 整数
+primitive := 実数
+primitive := 符号なし整数又はポインタ
+primitive := (expression)
+primitive := 組み込み関数(expression, expression, ..., expression)
+primitive := 配列名称(expression, expression)
+
+term := primitive * primitive
+term := primitive / primitive
+
+■Octaveベースの文法仕様
+
+A(2:5) = [4:7]を可能とする
+配列オブジェクトに対して、アクセス指定子（インデックス変換）の適用が必要
+UnivType型中にUnivType *m_pReferenceを追加する
+
+基本文法：
+left_top = right_top		※定数定義式
+const left_top = right_top	※定数定義式（明示的）
+variable left_top = right_top	※変数定義式
+reference left_top = right_top	※参照定義式
+function func_top = right_top	※関数定義式
+
+func_top := 関数名称(引数名称1, 引数名称2, 引数名称3,  ... 引数名称n)
+
+※文末に ; はあってもなくても良いものとする
+
+--- 右辺式関連
+
+right_top := vector local		※ matrixからとなっていないのは、文末の ; と混同しないため
+right_top := if condition then vector else vector local
+right_top := switch matrix 
+		case matrix then vector 
+		case matrix then vector ... 
+		case matrix then vector 
+		local
+
+local := (none)
+local := where right_top
+local := where {right_top, right_top, ..., right_top}
+
+matrix := vector
+matrix := vector; vector; ...; vector
+
+vector := condition
+vector := condition, condition, ..., condition
+
+condition := expression
+condition := expression == expression
+condition := expression != expression
+condition := expression >  expression
+condition := expression <  expression
+condition := expression >= expression
+condition := expression <= expression
+
+expression := exp_1st
+expression := exp_1st + exp_2nd
+expression := exp_1st - exp_2nd
+expression := exp_1st | exp_2nd
+expression := exp_1st & exp_2nd
+expression := exp_1st ^ exp_2nd -> 廃止 xorに変更
+expression := exp_1st || exp_2nd
+expression := exp_1st && exp_2nd
+expression := exp_1st ^^ exp_2nd -> 廃止 xorに変更
+exp_1st := term
+exp_1st := + term
+exp_1st := - term
+exp_2nd := term + exp_2nd
+exp_2nd := term - exp_2nd
+exp_2nd := term | exp_2nd
+exp_2nd := term & exp_2nd
+exp_2nd := term ^ exp_2nd
+exp_2nd := term || exp_2nd
+exp_2nd := term && exp_2nd
+exp_2nd := term ^^ exp_2nd
+
+※ベクトル、行列の場合には全てのサイズが同じであること、またはスカラーでも可能
+(expressionはwhile文で実装)
+
+primitive := 整数
+primitive := 実数
+primitive := "文字列"
+primitive := 符号なし整数又はポインタ
+primitive := バイナリオブジェクト
+primitive := true
+primitive := false
+primitive := (right_top)
+primitive := {right_top}
+primitive := [right_top]
+primitive := ()		※空リスト
+primitive := {}		※空リスト
+primitive := []		※空リスト
+primitive := $expression$		※互換性のため（スカラー限定表現）
+primitive := begin	※使えるかどうかは条件付
+primitive := end	※使えるかどうかは条件付
+primitive := シンボル
+
+※ただし、２次元配列は不可能、ベクトル又は「:」又はスカラー
+
+func := primitive
+func := primitive func_suffix func_suffix ... func_suffix
+func_suffix := (condition, condition, ..., condition)	※関数
+func_suffix := [right_array_index]				※インデックス付き配列アクセス（１次元）
+func_suffix := [right_array_index, right_array_index]		※インデックス付き配列アクセス（２次元）
+
+subset_access := func
+subset_access := func.func. ... .func.func	※ただし、全てにおいてfuncがprimitiveである場合にはシンボルでなければならない
+
+unary_op := subset_access
+unary_op := !subset_access		※真偽の反転
+unary_op := ~subset_access		※ビット反転
+unary_op := subset_access'		※共役転置
+unary_op := subset_access.'		※転置
+unary_op := subset_access:subset_access			※全要素はスカラー
+unary_op := subset_access:subset_access:subset_access	※全要素はスカラー
+unary_op := subset_access^subset_access			※全要素はスカラー
+unary_op := subset_access.^subset_access
+
+term := unary_op
+term := unary_op * unary_op	※両方が行列（行列積）又は片方がスカラ
+term := unary_op / unary_op	※片方がスカラ
+term := unary_op .* unary_op	※両者のサイズは等しいこと
+term := unary_op ./ unary_op	※両者のサイズは等しいこと
+(termはwhile文で実装)
+
+--- 左辺式関連
+
+left_top := left_matrix
+
+left_matrix := left_vector
+left_matrix := left_vector; left_vector; ...; left_vector
+
+left_vector := left_primitive
+left_vector := left_primitive, left_primitive, ..., left_primitive
+
+left_primitive := (left_top)
+left_primitive := {left_top}
+left_primitive := [left_top]
+left_primitive := 配列名称
+left_primitive := 配列名称(left_array_index)
+left_primitive := 配列名称(left_array_index, left_array_index)
+left_primitive := begin	※使えるかどうかは条件付
+left_primitive := end	※使えるかどうかは条件付
+
+--- 配列の引数
+
+right_array_index := :
+right_array_index := unary_op		※（begin, endは有効にする）IndexConvのseriesモードを使う
+right_array_index := expression		※（begin, endは有効にする）IndexConvのtableモードを使う
+
+left_array_index := :
+left_array_index := unary_op		※（begin, endは有効にする）IndexConvのseriesモードを使う
+left_array_index := expression		※（begin, endは無効にする）IndexConvのtableモードを使う
+
+■却下された文法
+reserved left_top = rsv_top	※サイズ定義式
+
+rsv_top := matrix(primitive, primitive)
+rsv_top := vector(primitive)	※ vector(n)はmatrix(n, 1)と同値
+rsv_top := scalar
+
+reserved C = vector(6)
+C(1:3) = D
+
+reserved F = matrix(2, 6)
+F(:, 4:end) = [1, 2, 3; 3, 4, 5]	#OK
+
+reserved G = matrix(2, 6)
+G = 5	#サイズが異なるのでエラー
+
+■関数呼び出し
+	F()
+	F(A)
+	F(A, B)
+	F(A, B, C)
+
+■インデックス付き左辺式
+インデックス付きアクセスは、正式には以下の文法とする
+	A[3]	# １次元アクセス
+	A[3, 4]	# ２次元アクセス
+
+MATLABとの互換性のため、Aが関数でないことが明らかな場合には以下のようにも記述できるものとする
+	A(3)	# １次元アクセス
+	A(3, 4)	# ２次元アクセス
+ただし、Aが関数なのか変数なのか区別がつかない場合、この表記は関数呼び出しとして解釈されるので注意すること。
+
+(例)
+	subset Z
+	A = Z
+	Y = A.B(X)	# Bが関数なのか変数なのか分からないため、関数呼び出しとして扱われる
+	Q = A.B[P]	# Bは配列アクセスされる
+
+■文末の ; の使い方
+文末のセミコロンはあってもなくても構わない
+	A = 1
+	B = 2;
+ただし、直前の右辺式が関数または配列でないと保証できない場合、その次の行で配列への代入をすると文法エラーとなるため、
+	X = custom_func(A)	# custom_func(A)[Y, Z] と混同してしまう
+	[Y, Z] = [1, 2]
+このような場合には、文末の;を活用して分の区切り目を明確にできる
+	X = custom_func(A);	# OK
+	[Y, Z] = [1, 2]
+(注意)
+以下の例もNGであるため、配列への代入を使う際には、必ず文末に ; を付けるようにしたほうが良い
+	X = [1, 2]		# [1, 2][Y, Z] (配列[1, 2]のY行目Z列目)と混同する
+	[Y, Z] = [1, 2]
+
+■数式の内部表現
+☆Equationクラス
+(op, narg, arg_1, arg_2, ... arg_n)	※arg_*は全てUnivType型
+op = { +, -, *, /, .*, ./, row_vec, col_vec, extract, 組み込み関数名 }
+
+例：
+ans1 = (*, 2, 6, 7)
+ans2 = (row_vec, 2, 5, 6)
+ans = (+, 3, 6, ans1, ans2)
+update_ans1	※全ての数式にはUpdateフラグがついている
+update_ans2
+update_ans
+数式もUnivType型（もしくはその派生型）で表現される
+ans格納領域, +, 3, 6, ans1格納領域, ans2格納領域, *, 2, 6, 7, row_vec, 2, 5, 6
+
+■処理手順
+構文解析→数式の内部表現へ、Updateフラグは全てfalse
+数式の内部表現→変数を含まないものは算出を完了させる
+　　　　　　　　変数を含むものは評価できるものは評価、Updateフラグ更新
+setメソッド→それを含む数式のUpdateメソッドを再帰的にfalseにする
+
+■UnivType型
+各タイプ別の演算をサポート（クラス外メソッドでもいいかもしれない）
+スカラ・ベクトル型をサポート
+
+配列アクセス演算子として
+UnivType& operator[]
+UnivType& getAt(row, col)
+bool isConstant() const
+void simplify()
+IntU16 getInt()
+IntS16 getUInt()
+float getFloat()
+double getDouble()
+const char *getString()
+void *getBinary()
+同様にset****()も必要
+
+配列要素へのアクセス方法
+UnivType *pUnivType;
+IntU16 x = pUnivtype->getAt(row, col).getIntU16();
+スカラ値へのアクセス方法
+IntU16 x = pUnivtype->getIntU16();
+
+■NamedUnivType型
+static void *operator new(size_t size, const char *pName);
+static void *operator new[](size_t size);	// 使わない
+NamedUnivType();
+const char *getName() const;
+
+使い方
+NamedUnivType *pUnivType = new("LABEL") NamedUnivType;	// ラベル名称を指定
+ラベル名称を含めたサイズが動的に確保される
+NamedUnivType *pUnivType = new(NULL) NamedUnivType;	// 名前なしconstオブジェクト
+名前なしconstオブジェクトは、mallocされずに別のヒープに置かれるというのでもいい。
+
+http://www.geocities.jp/ky_webid/cpp/language/036.html
+http://www.fides.dti.ne.jp/~oka-t/cpp-labyrinth.html
+
+■ArrayObj型
+過去バージョンとの互換性のためだけに存在
+UnivType型のラッパーとなる
+
+■組み込み関数
+SETINT(primitive, top)		数値設定
+BITFIELD(top, top)		ビットフィールド
+SUM(top, top, top)		合計
+CEIL(top)			切り上げ
+FIX(top)			切捨て
+LOG(top)			Log(底は自然対数の底)
+LOG10(top)			Log(底は10)
+LOG2(top)			Log(底は2)
+XOR(top, top)			論理XOR
+XOR_BIT(top, top)		ビットXOR
+INC_IF_ODD(top)			奇数ならインクリメント
+FLIPLR(top)			左右反転
+FLIPUD(top)			上下反転
+REPMAT(top)			繰り返しコピー
+FIND(top)			要素を見つける
+ONES(top)			全て１の配列を生成
+ZEROS(top)			全て０の配列を生成
+COND(top, top, ...)		条件による選択
+
+組み込み関数はトークンの段階では識別しない。
+
+■ユーザー定義関数
+☆Equationクラス
+op = bindの際には、セットされているEquationオブジェクトの引数に
+対して、自分が保持している引数をセットしてから結果を出力する。
+(第一引数をそのEquationオブジェクトとしても可能)
+UnivTypeに関数という型を持たせて特別扱いする。
+
+(文法)
+function ADD(x, y) = x + y
+x, y はローカル変数となり、関数外部とは独立している。（名称が衝突しても構わない）
+
+■行列の要素を行列とする文法
+１つ外側の括弧と異種の括弧で囲むと行列の要素を行列とすることができる。
+１つ外側の括弧と同種の括弧で囲むと行列として結合される。
+（１つ外側の括弧がない場合には、同種の括弧として扱われる）
+
+（例）
+A = [1, 2, B, (3, 4), 5, 6, (7:9)', 10]
+C = [B', [1, 2]']
+D = [1, 2, 3, [4:2:8], 9]	# = [1, 2, 3, 4, 6, 8, 9]
+E = [ A; C; D]		# 行列のサイズが合わないためエラー
+F = [ (A); (C); (D)]	# 各要素に行列が入るためOK
+[A]と[(A)]は異なっている
+[(A).']==[(A)]である。なぜなら１要素に対する転置となるため
+[ A; C; D] = (A); (C); (D)
+
+■変数定義の一意性
+A = 1
+A = B	#変数は一意に定義されなくてはならないためエラー
+reserved C = vector(6)
+C(1:3) = D
+C(3:5) = E	#C(3)が重複定義されているためエラー
+
+■行列変数のサイズ決定方法
+A = [1, 2; 3, 4]	#直接決定される
+B = [1, (X); (Y), 4]	#直接決定される
+C = [1, X; Y, 4]	#X, Yのサイズが決定されていれば直接決定される（数式評価によりサイズ決定される）
+D(:, 4:5) = [1, 2; 3, 4]		#数式評価によりサイズ決定される
+F(:, 4:end) = [1, 2, 3; 3, 4, 5]	#直接決定される
+
+■行列間の代入
+左辺に定数属性変数又は定数がきてはいけない
+A(2:3, 4:6) = [3, 5, 2; 1, 2, 1]	#OK
+[A, B] = [1, 2, 3]	#サイズが合えば（sizeof(A)=(1, 1), sizeof(B)=(1, 2)又はその逆）OK
+const C = [5, 7]
+[A, C] = [1, 2, 3]	#Cがconst属性の場合エラー
+[A, B, 1] = [1, 2, 3]	#エラー（1がconst属性であるため）
+
+■ユーザー定義関数の定数属性
+関数利用側のEquationオブジェクト（OP_CUSTOM_FUNCタイプ)
+全ての引数の定数属性をチェックして、定数かどうか決定
+最初の引数はユーザー定義関数自体のUnivTypeであり、
+以降の引数は関数に代入する引数のUnivTypeである。
+前者がConstであるということは、引数以外に参照される変数が
+全てConstであることを示し、これと引数がConstであるということは、
+算出結果自体が定数であることを意味する。
+
+関数定義側Equationオブジェクト
+全ての引数は初期化時にConst属性にしておく。
+実際に代入される引数がConstなのかは、関数利用側のEquationオブジェクト
+が判定するため問題ない。
+
+■インデックス付き左辺式の代入の内部構造
+以下、Aのサイズが一意に決定されていれば、Aに直接数値が代入される
+A(0:1, 1:end) = [1, 2, 3; 4, 5, 6]
+A(end, 1:end) = [7, 8, 9]
+もし、Aのサイズが可変の場合、上記の代入式を１つにまとめた数式によってAが定義される
+
+■配列の要素アクセス方法
+ConfigDBにおいて、配列の要素として配列をとることができるのは重要
+しかし、ＭＡＴＬＡＢの添え字アクセスでは、結果がベクトルだとベクトルとなり、
+結果が１×１行列と配列をスカラーとして扱えるようになるという規則であるため、
+それに対応させる必要がある。「インデックス変換」だけではそれに対応できない。
+
+例：
+Aを行列として、
+A(2, 3)は１×１の配列ではなくて、スカラーとして扱われなくてはならない。
+このため、参照型でIndexConvを利用しているUnivTypeが１×１配列として
+アクセスされる場合、これを特別にスカラーとして扱えるようにする。
+
+TODO: 上記の仕様は、UnivTypeに変更が必要
+Set***, Get***には全て変更が必要
+SetMatrixには、特に修正が必要
+simplify()にも変更が必要となる
+isMatrix(), isScalar()にも修正が必要となる
+
+■代入の実装
+(例1)
+X = 1
+通常の参照設定
+topRight()はXとIndexConv(=NULL)を返す
+topRight()
+
+(例2)
+[A, B] = [1, 2, 3]
+通常の参照設定
+topRight()はAとIndexConv(0, 0), BとIndexConv(0, 1:end)を返す
+
+(例3)
+A(2:3, 4:6) = [3, 5, 2; 1, 2, 1]
+Equation::OP_CAT_PARTIAL_REFを利用する
+topRight()はオブジェクトAとそれに付属するIndexConvを返す
+
+enum IndexModificationType
+{
+	INDEX_PARTIAL_USE,
+	INDEX_PARTIAL_DEF
+};
+
+struct VariableDef
+{
+	enum IndexModificationType;
+	UnivType& m_variable;
+	IndexConv *m_pIndexConv;
+};
+
+■サブセットの定義
+subset A {
+	subset B {
+		C = 1
+	}
+	D = 2
+}
+
+・名前空間としてのアクセス（読み出しのみ）
+	A.B.C
+
+	X.C
+	X = A.B
+・ユーザー定義関数上でのアクセス（引数でサブセットをとる）
+	F(X) = X.C
+	F(A.B)として使う
+・C++でのインターフェイス
+	BaseDB *UnivType::getDB();
+	pRoot->getUnivType("A")->getDB()->getUnivType("B")->getDB()->getInt("C")
+
+■サブセットの実装
+・UnivTypeに新しい型を追加	SUBSET型
+・A.B(A,Bともに定数)は通常の変数と同様に直接リンクが貼られる
+・A.X.C.K(Xは変数)は_GET_SUBSET(_GET_SUBSET(A.X, "C"), "K")という組み込み関数と同値であり、
+　A.Xの内容が変更するたびに再検索とリンクの張りなおしが実行される
+・以上は全て、サブセット名からUnivType型ポインタを得る関数で実現される
+・名前空間からの読み出し用組み込み関数を追加
+	_GET_SUBSET(X, "関数名")
+・名前空間の定義関数を最上位に追加（subset, extends命令など）
+
+■固定名称サブセット
+
+(例1) ------------------------------
+
+subset A {
+	X = 3
+}
+
+Y = A.X		# 固定リンクされる、高速アクセスが可能
+
+(例2) ------------------------------
+
+subset A	# Aがサブセットであることを事前に宣言しておく
+
+Y = A.X		# 固定リンクされる、高速アクセスが可能
+
+subset A {	# サブセットAの定義
+	X = 3
+}
+
+■サブセット変数によるアクセス
+
+(例1) ------------------------------
+
+subset A {	# サブセットAの定義
+	X = 3
+}
+
+B = A
+Y = B.X		# サブセット変数による間接アクセス、Bの変更のたびにXが検索されるので時間がかかる
+
+(例2) ------------------------------
+
+Y = A.X		# サブセット変数による間接アクセス、Bの変更のたびにXが検索されるので時間がかかる
+
+subset A {	# サブセットAの定義 →エラー : Aは使うより以前に宣言されていないため、サブセット変数となる。変数とサブセット名称が衝突してエラーとなる。
+	X = 3
+}
+
+■文法上の制限
+・左辺式において、A.Bなどの表記は不可能（この書き方は読み出しのみ）であり、
+　定義を追加したい場合には、subset A { }で囲うこと。
+
+■サブセットの実装
+・サブセットはBaseDBインスタンスによって管理される
+・サブセットのBaseDBインスタンスはUnivTypeのSUBSET型が保持している
+・BaseDB::m_pSubsetOwnerはサブセットの持ち主を指す（サブセットの上位アクセスのために利用される）
+・サブセットに別のDBであるAをconnectすると、Aもそのサブセットとして扱われる
+・接続されたDB同士は同じサブセットに属するものとして扱われる
+
+---------- 以下の仕様は保留 ----------
+
+■サブセットの拡張
+
+subset A {
+	override X = 0
+	Y = X + 1
+}
+
+subset B extends A {
+	X = 2
+	Z = 3
+}
+
+・A.X = 0
+・A.Y = 1
+・B.X = 2
+・B.Y = 3
+・B.Z = 3
+・override修飾子は、その変数が派生サブセット先で再定義される可能性があることを示している
+　overrideがついていない場合は、派生先で再定義は許されない
+
+■サブセットの拡張の実装
+
+例は以下の定義と同値である。
+subset A {
+	X = 0
+	defun _Y(J) = J + 1
+	Y = _Y(X)
+}
+
+subset B {
+	X = 2
+	Y = A._Y(X)
+	Z = 3
+}

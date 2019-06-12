@@ -1,0 +1,155 @@
+■ constの扱い方(新仕様)
+・UnivTypeは以下の属性を持つ
+	(1) isConst() : このUnivTypeに対して書き込み（set***()の実行）ができるかどうか。
+	    変数をスクリプト記述すると、デフォルトでこの状態となる。
+	    変数にvariable修飾子をつけると、constでなくなる。
+	    自身の内容を書き換えることができるかのみの基準。
+	    isFullReference() == trueの場合には、この設定は参照先のUnivTypeの設定値に従う。
+	(2) isFixed() : このUnivTypeの値が常に一定（他の変数に依存せずに）であるかどうか。
+	    isConst() == trueであっても、isFixed() == trueであるとは限らないが、逆は成り立つ。
+	    自UnivTypeの依存先が全てfixedのときに、初めて自身もfixedとなる。
+	(3) isFullReference() : このUnivTypeは、指定されているUnivTypeの完全な参照として働く。
+	    読み込みと書き込みは、全て参照先に対して行われる。
+	(4) isConstReference() : このUnivTypeは、読み出しに対してのみ働く参照となる。
+	    このUnivTypeに対して書き込む（set***()の実行）と、参照が解除される。
+	    isConst()は、自身の設定値を返すものとする。（特別な動作はしない）
+	(5) isReference() : (isFullReference() == true) || (isConstReference() == true)
+
+タイプ識別子
+TYPE_REF : 
+	読み出し/書き込みができるフル参照を示す。
+	自身のconst属性は無効化される。
+	フル参照を解除するには、releaseReference()を呼ぶしかない。他の手段では解除できない。
+	（フル参照にフル参照を上書きしようとしてフル参照を設定すると、参照先にフル参照が設定されてしまう。）
+TYPE_REF_CONST : 
+	読みだしのみに対して働く参照を示す。
+	この属性を持つUnivTypeに書き込む（つまり参照解除）ことができるかどうかは、自身のconst属性による。
+
+
+（例１）
+X = Y	# constであるがfixedでない。Xに書き込むことはできない。
+variable Y = 2
+
+（例２）
+variable X = Y	# constでなく、fixedである。Xに書き込むとYへの参照が切れる。
+Y = A + B
+A = 1
+B = 2
+
+（例３）
+variable X = Y	# constでなく、fixedでもない。Xに書き込むとYへの参照が切れる
+variable Y = A + B
+A = 1
+B = 2
+
+（例４）
+reference X = Y	# constでなく、fixedでもない。XはYと同値になる。Xに書き込むとYの数式が失われる。
+variable Y = A + B
+A = 1
+B = 2
+
+★詳細定義
+・IndexConvつきのフル参照も可能であるが、行列機能以外は通常のフル参照と同じ働きをする（行列要素に対するもの以外への変更は、行列全体を削除することになる）
+・setConstant()を許すなら、このタイミングで全ての更新が必要
+
+★決め事・確認ごと
+Equationオブジェクトは1つのUnivTypeオブジェクトによってのみ保持される。（共有されない）
+（これを保障するために、UnivType::setEquation()を消してしまったほうがいいかも）
+UnivMatrixオブジェクトはUnivTypeしか作成できないようにprotectedになっている。
+
+★referenceの実装
+referenceが付加されている場合、行における最左辺から実際の値までの全ての参照（関数の引数など、constであることが固定されているものもある）
+がフル参照として実装される。逆にreferenceがついていないと、それらは全てconst参照となる。
+
+★配列のgetAt()に対するreferenceの実装
+フル参照に対しては普通に参照先要素へのUnivType*ポインタを返す
+const参照に対しては、参照先要素へのconst UnivType*ポインタは返せるが、UnivType*ポインタは取得できない
+
+★variable, constの実装
+topLeft()から左辺式解析が最も深いところへ行った時点で名前つき変数が生成される。
+そのときに、キーワードの有無によってconst属性が付加される。
+
+★variable属性の数式における、算出結果が行列となる場合の動作
+variabule属性のUnivTypeが数式を持つ場合、そのUnivType自身への書き込み(set***の実行)によって、数式は消滅する。
+これは数式の算出結果がスカラーでも行列でも同様である。
+もし、数式の算出結果が行列である場合に、その要素のUnivTypeへの書き込みが行われた場合、書き込みが行われた瞬間の
+算出結果の行列内容に、その要素のUnivTypeへの書き込みが反映された内容を保持するものとする。
+ただし、この場合も同様に数式は消滅してしまうため、最初の書き込みのタイミングで数式機能が失われることに変わりはない。
+実装は、行列の各要素としては、OwnedUnivTypeが利用されていて、その型にUnivTypeをdynamic_castすると、
+その行列要素を計算結果（キャッシュ内）として保持しているEquationオブジェクトを得ることができ、
+行列要素への書き込みが実行されたタイミングにて、キャッシュ内容を確定し、数式を削除する（または参照を解除する）ことを行う。
+このような動作は、数式のFixCacheWhenWrite属性がtrue場合のみ動作する。
+行列は絶対に元をたどれば数式なので、Variable属性を持つ変数である場合、それの数式のトップにFixCacheWhenWrite属性をつけておけばよい。
+単なる参照のvariableの場合、例えば
+P = [1, 2; 3, 4]
+variable Q = P(:, 1)
+のQに書き込む場合には、一旦OP_NONE動作をする数式をかましてから、第一引数へPへの参照を張る。数式にはFixCacheWhenWrite属性をつけておく。
+OP_NONEは、第一引数を何もせずにevalCopyして返す数式動作である。
+
+★PartialRefの扱い
+A(1) = 1
+A(2) = B
+reference A(3) = C
+const A(4) = D
+Aの各要素から数式(OP_CAT_PARTIAL_REF)への引数はフル参照
+数式の引数から実際のオブジェクト(topRight()への引数)への参照も、フル参照
+実際のオブジェクトが、フル参照か読み込み参照かで変化する
+const属性も実際のオブジェクトに付加される
+A自体はconstにならない。（PartialRefの場合には、A変数自体にconst属性を付加することは不可能。個別の要素での定義を設定できるのみ）
+
+TODO
+定数や数式でreferenceが指定された場合に例外を投げること
+（数式においてreference指定可能なのはcatのみとすること）
+indexconvとequationのisConstant()はいらないと思うので、他から使われていないか確認すること
+値の更新、simplifyとキャッシュ機能を全面的に見直す必要あり
+
+★解決済み
+
+[A, B] = Cの表現を使うと、前のトークンからの繋がりで配列インデックス参照をされていると間違える文法上の問題あり
+↓
+文末の;を導入することによって解決
+
+----- 以下は旧仕様であり、ゴミ -------------------------------------------
+
+■ constの扱い方(旧仕様)
+・UnivTypeは自身がconstであるかどうかを保持するビットを持つ
+・そのビットはsetConstant()によって設定可能
+・constであるUnivTypeは、その保持している値や参照先が一切変更できなくなる
+・しかし、constであって参照である場合、参照先は変更できないが、参照先に対して
+の変更は可能となる
+・isConstant()は、UnivTypeの書き込み関数郡が利用できるかを単に返すものである
+・isConstant()は、
+(1)自身のUnivTypeがconstでない場合、常にfalse
+(2)自身のUnivTypeがconstで参照でない場合、自身のUnivTypeがconstであればtrue
+(3)自身のUnivTypeがconstで参照である場合、参照先のUnivTypeがconstでなければf
+alse
+を返すものとする。
+・つまり、constで参照している変数において、その変数に書き込むと、参照先の変数
+が変更され、
+非constで参照している変数において、その変数に書き込むと、参照が解除され、書
+き込まれた値となる。
+または、再設定した参照先となる。
+
+（例１）
+const X = Y
+Y = 1
+・Yに５を書き込むのとXに５を書き込むのは同値
+・変数XのisConst()はfalse、変数YのisConst()はfalse
+・XにZへの参照を設定すると、YもZを参照するようになる
+
+（例２）
+X = Y
+Y = 1
+・Xに５を書き込むと、Yへの参照が解除され、X=5, Y=1となる
+・変数XのisConst()はfalse、変数YのisConst()はfalse
+
+（例３）
+X = Y
+const Y = 1
+・Xに５を書き込むと、Yへの参照が解除され、X=5, Y=1となる
+・変数XのisConst()はfalse、変数YのisConst()はtrue
+
+（例４）
+const X = Y
+const Y = 1
+・変数XのisConst()はtrue、変数YのisConst()はtrue

@@ -1,0 +1,26 @@
+reference [P, Q]=[10, 2]
+function A(X) = X + 1
+reference B = 2
+C = A(B)
+D = [2, 3, 2; "ID", "Name", "Prop"; 5.0, 4.0, 2.0]
+WD = sum([1, 2, B])
+E = sizeof(D)
+
+#reference ERR = C * B
+
+#function factorial(x) = cond(x, 1, x * factorial(x - 1), x * factorial(x - 1), x * factorial(x - 1))
+function factorial(x) = if x == 1 then 1 else x * factorial(x - 1)
+ans = factorial(5)
+
+sw_test = switch B
+		case 1 then "hello"
+		case 2 then "poor"
+		case 3 then "happy"
+		otherwise "default"
+
+if_test = if B == 2 then
+		"B == 2"
+	elsif B == 3 then
+		"B == 3"
+	else
+		"otherwise"

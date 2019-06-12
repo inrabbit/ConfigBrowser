@@ -1,0 +1,20 @@
+subset Usagi{
+	Name = "Rabbit"
+	Age = 29
+	Language = "Japanese"
+}
+
+subset Peeko{
+	Name = "Peeko"
+	Race = "Bird"
+	Favorite = "?"
+}
+
+Array = [1, 2, 3; 4, 5, 6]
+
+variable input = 1
+
+Table = [Usagi, Peeko, (Array)]
+#Table = Usagi, Peeko
+
+ans = Table[input]
